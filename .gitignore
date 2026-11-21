@@ -1,0 +1,35 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+frontend/build/
+frontend/.flutter-plugins*
+frontend/android/local.properties
+frontend/ios/Flutter/.last_build_id
+
+# Python
+__pycache__/
+*.py[cod]
+
+# .NET
+**/bin/
+**/obj/
+*.user
+*.suo
+backend/AvoraAI.API/Uploads/Avatars/
+backend/AvoraAI.API/Uploads/Foods/
+
+# Local secrets and environment files
+**/secrets.json
+.env
+.env.*
+!.env.example
+
+# IDE and OS
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,203 @@
+AVORA AI
+GIẢI THÍCH CẤU TRÚC THƯ MỤC VÀ TỆP
+
+Mục đích
+Tài liệu này giải thích các thư mục và tệp dự án Avora AI đang có trong Explorer. Phần mã nguồn và cấu hình được liệt kê theo từng tệp. Các thư mục build, cache và thư viện tải tự động được giải thích theo nhóm vì chúng có thể chứa hàng trăm tệp do công cụ tạo ra.
+
+Cách ứng dụng hoạt động
+Điện thoại Android chạy giao diện Flutter trong frontend. Giao diện gửi yêu cầu đến ASP.NET Core API trong backend/AvoraAI.API. API kiểm tra quyền, xử lý nghiệp vụ và đọc ghi SQL Server qua Entity Framework Core. Khi cần tối ưu thực đơn, API sử dụng các thuật toán Python trong backend/app/algorithms.
+
+CÂY THƯ MỤC CẤP GỐC
+
+AvoraAI/
+  .git/                         Dữ liệu nội bộ của Git, lịch sử và nhánh
+  .task-reset/                  Đầu ra build tạm thời, chủ yếu bin và obj
+  .tmp-superadmin-update/       Đầu ra build tạm của tiện ích SuperAdmin
+  artifacts/                    Bản cài Android đã build
+  backend/                      API, mô hình dữ liệu, dịch vụ, thuật toán và kiểm thử
+  database/                     Thư mục hiện trống; database thực tế là SQL Server
+  docs/                         Tài liệu yêu cầu, thiết kế, cài đặt và tiến độ
+  frontend/                     Ứng dụng Flutter cho Android
+  scripts/                      Script cài đặt Admin, cấu hình và nhập danh mục
+  Uploads/                      Tệp người dùng tải lên, hiện dành cho ảnh món ăn
+  .gitignore                    Quy tắc loại trừ tệp khỏi Git
+  README.md                     Giới thiệu dự án và chỉ dẫn bắt đầu
+
+1. CÁC THƯ MỤC VÀ TỆP Ở GỐC
+
+.git
+Thư mục ẩn do Git quản lý. Chứa commit, nhánh, cấu hình và thông tin theo dõi thay đổi. Không sửa tệp bên trong bằng tay.
+
+.task-reset
+Thư mục tạm có bin/ và obj/ chứa sản phẩm build .NET ở cấu hình Release. Đây không phải mã nguồn ứng dụng.
+
+.tmp-superadmin-update
+Thư mục tạm có bin/ và obj/ của một lần build tiện ích cập nhật SuperAdmin. Không phải thư mục mã nguồn chính. Không cần mở khi sửa giao diện hoặc API.
+
+artifacts/AvoraAI.apk
+Gói cài đặt Android đã được build. Có thể dùng để cài ứng dụng lên điện thoại. Khi mã nguồn thay đổi, APK cũ không tự cập nhật cho đến khi build lại.
+
+database/
+Hiện chưa có tệp bên trong. Ứng dụng kết nối đến SQL Server; cấu trúc bảng được mô tả bởi AppDbContext và các migration trong backend/AvoraAI.API/Data/Migrations.
+
+Uploads/Dishes/
+Nơi API lưu ảnh món ăn do quản trị viên tải lên. Thư mục hiện trống. Ảnh được lưu bên ngoài mã nguồn để có thể thay đổi mà không sửa ứng dụng.
+
+.gitignore
+Danh sách tệp Git bỏ qua, thường gồm tệp build, cache, cấu hình máy cá nhân hoặc dữ liệu bí mật.
+
+README.md
+Trang giới thiệu ngắn: dự án có ứng dụng Flutter, API ASP.NET Core và SQL Server; dẫn đến tài liệu thiết lập.
+
+2. BACKEND
+
+backend/app/algorithms/
+Chứa mã Python thật cho thuật toán đề xuất thực đơn.
+
+- adaptive_hybrid_ga_pso.py: thuật toán tối ưu thực đơn dựa trên Genetic Algorithm kết hợp Particle Swarm Optimization.
+- meal_optimizer_adapter.py: lớp chuyển dữ liệu giữa API C# và thuật toán Python.
+
+backend/AvoraAI.API/
+Đây là dự án ASP.NET Core 8 cung cấp API cho ứng dụng.
+
+Các tệp cấp dự án:
+- AvoraAI.API.csproj: khai báo .NET 8 và thư viện NuGet như Entity Framework Core SQL Server, xác thực JWT, Swagger và MailKit. Tệp này cũng cấu hình sao chép hai script Python vào đầu ra API.
+- Program.cs: điểm vào và phần lớn endpoint API. Các nhóm chính gồm đăng nhập/OTP; hồ sơ, mục tiêu và bữa ăn; tủ lạnh; thực phẩm và món ăn; yêu thích/đánh giá; chức năng Admin và SuperAdmin.
+- appsettings.json: cấu hình mặc định của ứng dụng. Không nên lưu mật khẩu hoặc khóa bí mật vào đây.
+- appsettings.Development.json: cấu hình dùng khi chạy môi trường phát triển.
+- AvoraAI.API.http: các mẫu yêu cầu HTTP để gọi API thủ công từ IDE.
+- Properties/launchSettings.json: cấu hình profile chạy API trong máy phát triển, gồm URL và môi trường.
+- Algorithms/__pycache__/: bytecode Python sinh tự động. Mã Python gốc nằm ở backend/app/algorithms.
+
+Data/
+- AppDbContext.cs: khai báo các bảng, khóa, quan hệ, chỉ mục và một số nhóm thực phẩm ban đầu cho Entity Framework.
+- Migrations/: lịch sử thay đổi cấu trúc SQL Server theo từng phiên bản.
+- AppDbContextModelSnapshot.cs: ảnh chụp mô hình database mới nhất để EF so sánh khi tạo migration kế tiếp.
+
+Các migration hiện có:
+- 20261105200753_InitialCreate: tạo cấu trúc database ban đầu.
+- 20261105201907_AddOwnershipRelations: bổ sung quan hệ sở hữu giữa dữ liệu và tài khoản.
+- 20261105202045_AddNutritionFieldSources: thêm nguồn dẫn cho các trường dinh dưỡng.
+- 20261105203243_SecurityTokenVersion: thêm phiên bản token để vô hiệu hóa phiên đăng nhập cũ.
+- 20261105212915_AddAdminUsernames: hỗ trợ tên đăng nhập cho Admin.
+- 20261105215053_SuperAdminLifecycleAudit: bổ sung vòng đời và nhật ký thao tác SuperAdmin.
+- 20261106181524_AddProfileAvatar: thêm đường dẫn ảnh đại diện.
+- 20261109150758_ReduceFoodNutritionToTwelve: thay đổi cấu trúc trường dinh dưỡng.
+- 20261109162216_AddFoodImages: thêm ảnh thực phẩm.
+- 20261110043325_AddFoodGroups: thêm nhóm thực phẩm.
+- 20261110061339_AddFoodTrash: thêm thùng rác và xóa mềm thực phẩm.
+- 20261110133420_DishManagement: thêm quản lý món ăn.
+- 20261110153357_DishCookingNotes: thêm ghi chú/cách nấu.
+- 20261119194828_CatalogImportAndEightNutrients: hỗ trợ nhập danh mục và bộ tám chỉ tiêu dinh dưỡng.
+- 20261119195950_GoalMealsAndConsumption: thêm mục tiêu, gợi ý bữa ăn và nhật ký xác nhận đã ăn.
+- 20261120200037_GoalEffectiveDateAndDuration: thêm ngày bắt đầu và thời hạn mục tiêu.
+- 20261121123501_GoalDashboardExtraMealsAndWeightHistory: thêm bữa ăn ngoài và lịch sử cân nặng.
+- 20261121125857_ExtraMealCaloriesOnly: thêm nơi lưu bữa phụ chỉ nhập kcal.
+
+Mỗi migration thường có hai tệp:
+- Tệp .cs chứa thao tác thay đổi database.
+- Tệp .Designer.cs do Entity Framework tạo, mô tả mô hình tại thời điểm migration.
+Không sửa các tệp Designer bằng tay. Khi đổi model, tạo migration mới thay vì sửa lịch sử cũ.
+
+Models/Entities.cs
+Định nghĩa các đối tượng dữ liệu như tài khoản, hồ sơ, thực phẩm, dinh dưỡng, món ăn, mục tiêu, bữa ăn, nhật ký cân nặng và nhật ký quản trị.
+
+Services/
+- DailyEnergyEstimator.cs: ước tính năng lượng duy trì và mục tiêu calo.
+- EmailOtpSender.cs: gửi mã OTP qua email bằng cấu hình SMTP.
+- HybridMealOptimizer.cs: gọi và điều phối thuật toán tối ưu thực đơn.
+- OtpCodes.cs: tạo, băm và kiểm tra mã OTP.
+- PasswordPolicy.cs: kiểm tra mật khẩu theo quy tắc của ứng dụng.
+
+backend/AvoraAI.API.Tests/
+Dự án kiểm thử tự động cho API.
+- AvoraAI.API.Tests.csproj: cấu hình xUnit và tham chiếu API.
+- OtpCodesTests.cs: kiểm tra logic OTP.
+- PasswordPolicyTests.cs: kiểm tra quy tắc mật khẩu.
+- UnitTest1.cs: tệp kiểm thử mẫu/khung còn lại trong dự án.
+
+backend/AvoraAI/
+Hiện chỉ có obj/ với tệp trung gian Entity Framework được sinh tự động; không có mã nguồn ứng dụng ở đây.
+
+3. FRONTEND FLUTTER
+
+frontend/lib/
+- main.dart: khởi động Flutter, cấu hình giao diện và mở ứng dụng.
+- app.dart: phần lớn giao diện và luồng màn hình hiện tại như Trang chủ, Mục tiêu, Tủ lạnh, Cá nhân, thực phẩm, món ăn và khu vực quản trị.
+- config/api_config.dart: địa chỉ gốc của API, có thể thay theo máy ảo hoặc điện thoại thật.
+- services/api_client.dart: lớp gọi HTTP, gắn token đăng nhập, xử lý refresh token và lỗi mạng.
+- services/goal_metrics.dart: các phép tính/chỉ số liên quan mục tiêu, tách khỏi giao diện để có thể kiểm tra riêng.
+
+frontend/test/
+- api_client_test.dart: kiểm tra hành vi của lớp gọi API.
+- goal_metrics_test.dart: kiểm tra phép tính mục tiêu.
+
+frontend/assets/
+- avora_landing_hero.png: ảnh minh họa phần giới thiệu/đăng nhập.
+
+Tệp cấu hình ở frontend/
+- pubspec.yaml: tên ứng dụng, phiên bản Flutter/Dart, thư viện và tài nguyên ảnh.
+- pubspec.lock: phiên bản cụ thể của các thư viện đã cài.
+- analysis_options.yaml: quy tắc lint/analyzer cho Dart.
+- .gitignore: những đầu ra Flutter/Android không đưa vào Git.
+- .metadata: thông tin nhận diện dự án Flutter.
+- .flutter-plugins-dependencies: danh sách plugin được Flutter tạo tự động.
+- frontend.iml: cấu hình mô-đun cho IDE JetBrains.
+- README.md: README mẫu Flutter ban đầu; hướng dẫn chạy thực tế nằm trong docs/setup.md.
+
+frontend/android/
+Phần vỏ Android giúp Flutter đóng gói và chạy trên thiết bị.
+- settings.gradle.kts, build.gradle.kts, gradle.properties: cấu hình các project Gradle và Android.
+- gradlew, gradlew.bat, gradle/wrapper/: Gradle Wrapper để chạy đúng phiên bản Gradle.
+- app/build.gradle.kts: cấu hình build của ứng dụng Android.
+- app/src/main/AndroidManifest.xml: quyền và khai báo ứng dụng Android.
+- app/src/debug/AndroidManifest.xml, app/src/profile/AndroidManifest.xml: cấu hình riêng cho debug và profile.
+- app/src/main/kotlin/com/example/frontend/MainActivity.kt: Activity Android mở ứng dụng Flutter.
+- app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java: danh sách plugin Android do Flutter sinh.
+- app/src/main/res/: hình khởi động, biểu tượng launcher và giao diện sáng/tối.
+- local.properties: đường dẫn Android SDK trên máy này; thường do Flutter/Android Studio tạo và không nên chia sẻ hoặc đưa lên Git.
+- frontend_android.iml: metadata IDE.
+
+frontend/.idea/
+Cấu hình Android Studio/IntelliJ như workspace, thư viện SDK và profile chạy main.dart. Không ảnh hưởng nghiệp vụ của app.
+
+4. TÀI LIỆU TRONG docs/
+
+- api-endpoints.md: danh sách endpoint, quyền truy cập và những nghiệp vụ API đã có/chưa có.
+- database-design.md: vai trò các bảng và quan hệ chính.
+- nutrition-fields.md: ý nghĩa, đơn vị và quy tắc dữ liệu của tám chỉ tiêu dinh dưỡng.
+- progress.md: tiến độ đã làm, lần kiểm tra gần nhất và phần còn chờ.
+- requirements.md: yêu cầu chức năng tổng thể của ứng dụng.
+- screen-map.md: sơ đồ màn hình và điều hướng theo User, Admin, SuperAdmin.
+- setup.md: cài môi trường, chạy API/Flutter và lệnh migration; đây là hướng dẫn chạy nên đọc đầu tiên.
+- smtp-setup.md: cấu hình Gmail SMTP và OTP.
+- team-workflow.md: quy ước làm việc nhóm và Git.
+
+5. SCRIPT TRONG scripts/
+
+- bootstrap-admin.ps1: tạo Admin ban đầu bằng email; nhập mật khẩu ẩn và sử dụng khóa thiết lập một lần.
+- bootstrap-admins.ps1: tạo nhóm Admin ban đầu, có bước chuẩn bị khóa thiết lập trong User Secrets.
+- bootstrap-superadmin.ps1: khởi tạo SuperAdmin lần đầu bằng khóa thiết lập một lần.
+- set-smtp-password.ps1: nhập và lưu mật khẩu SMTP vào .NET User Secrets, không ghi mật khẩu vào source.
+- verify-admin-logins.ps1: thử đăng nhập các tài khoản Admin cấu hình sẵn vào API local rồi thu hồi phiên kiểm tra.
+- import_avora_catalog.py: nhập danh mục thực phẩm và công thức từ workbook vào SQL Server. Script giữ ghi chú nguồn và không tự đánh dấu dữ liệu là đã duyệt.
+
+6. THƯ MỤC SINH TỰ ĐỘNG VÀ CÁCH SỬA ĐÚNG
+
+Các thư mục sau chứa đầu ra công cụ, không phải nơi viết chức năng:
+- bin/ và obj/ trong dự án .NET: file build và cache NuGet/MSBuild.
+- .dart_tool/ và build/ trong frontend: cache Dart/Flutter và bản build Android.
+- android/.gradle/ và android/.kotlin/: cache Gradle/Kotlin.
+- __pycache__/: bytecode Python.
+- artifacts/AvoraAI.apk: gói cài đặt đã build.
+- .task-reset/ và .tmp-superadmin-update/: thư mục build tạm.
+
+Một số thao tác thường gặp:
+- Sửa giao diện điện thoại: frontend/lib/app.dart.
+- Sửa URL API cho thiết bị: frontend/lib/config/api_config.dart.
+- Sửa cách app gọi API/token: frontend/lib/services/api_client.dart.
+- Thêm/sửa endpoint: backend/AvoraAI.API/Program.cs.
+- Sửa bảng và quan hệ: backend/AvoraAI.API/Models/Entities.cs và Data/AppDbContext.cs, sau đó tạo migration mới.
+- Sửa tính calo: backend/AvoraAI.API/Services/DailyEnergyEstimator.cs.
+- Sửa thuật toán đề xuất: backend/app/algorithms/.
+- Xem cách chạy và cấu hình: docs/setup.md.
